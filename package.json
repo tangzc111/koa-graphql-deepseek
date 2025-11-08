@@ -1,32 +1,29 @@
 {
   "name": "koa-graphql-deepseek",
   "version": "1.0.0",
-  "description": "A Koa server with GraphQL API that integrates DeepSeek AI",
+  "description": "GraphQL API with DeepSeek AI on Cloudflare Workers",
   "main": "src/index.js",
   "type": "module",
   "scripts": {
-    "start": "node -r dotenv/config src/index.js",
-    "dev": "nodemon -r dotenv/config src/index.js"
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "tail": "wrangler tail"
   },
   "keywords": [
-    "koa",
+    "cloudflare",
+    "workers",
     "graphql",
     "deepseek",
-    "ai"
+    "ai",
+    "hono"
   ],
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "@koa/cors": "^5.0.0",
-    "@koa/router": "^13.0.0",
-    "dotenv": "^16.4.5",
     "graphql": "^16.9.0",
-    "graphql-http": "^1.22.1",
-    "koa": "^2.15.3",
-    "koa-bodyparser": "^4.4.1",
-    "node-fetch": "^3.3.2"
+    "hono": "^4.10.4"
   },
   "devDependencies": {
-    "nodemon": "^3.1.7"
+    "wrangler": "^4.46.0"
   }
 }

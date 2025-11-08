@@ -1,10 +1,11 @@
-import fetch from 'node-fetch';
-
+/**
+ * DeepSeek Service for Cloudflare Workers
+ */
 export class DeepSeekService {
-  constructor() {
-    this.apiKey = process.env.DEEPSEEK_API_KEY;
-    this.apiUrl = process.env.DEEPSEEK_API_URL || 'https://api.deepseek.com/v1/chat/completions';
-    
+  constructor(env) {
+    this.apiKey = env.DEEPSEEK_API_KEY;
+    this.apiUrl = env.DEEPSEEK_API_URL || 'https://api.deepseek.com/v1/chat/completions';
+
     if (!this.apiKey) {
       console.warn('⚠️  DEEPSEEK_API_KEY not found in environment variables');
     }
@@ -24,10 +25,10 @@ export class DeepSeekService {
   /**
    * Chat with custom options
    */
-  async chatWithOptions({ 
-    message, 
-    model = 'deepseek-chat', 
-    temperature = 1.0, 
+  async chatWithOptions({
+    message,
+    model = 'deepseek-chat',
+    temperature = 1.0,
     maxTokens = 2048,
     systemPrompt = 'You are a helpful assistant.'
   }) {

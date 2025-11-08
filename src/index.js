@@ -1,31 +1,46 @@
-import Koa from 'koa';
-import Router from '@koa/router';
-import bodyParser from 'koa-bodyparser';
-import cors from '@koa/cors';
+import { Hono } from 'hono';
+import { cors } from 'hono/cors';
 import { graphql } from 'graphql';
 import { schema } from './graphql/schema.js';
-import { rootValue } from './graphql/resolvers.js';
+import { createResolvers } from './graphql/resolvers.js';
 
-const app = new Koa();
-const router = new Router();
+const app = new Hono();
 
-const PORT = process.env.PORT || 4000;
+// Enable CORS
+app.use('/*', cors());
 
-// Middleware
-app.use(cors());
-app.use(bodyParser());
+// Welcome endpoint
+app.get('/', (c) => {
+  return c.json({
+    message: 'Welcome to Koa + GraphQL + DeepSeek API on Cloudflare Workers',
+    endpoints: {
+      graphql: '/graphql',
+      health: '/health',
+    },
+    documentation: 'Send POST requests to /graphql with GraphQL queries',
+  });
+});
 
-// GraphQL endpoint
-router.post('/graphql', async (ctx) => {
-  const { query, variables, operationName } = ctx.request.body;
+// Health check endpoint
+app.get('/health', (c) => {
+  return c.json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+  });
+});
+
+// GraphQL POST endpoint
+app.post('/graphql', async (c) => {
+  const body = await c.req.json();
+  const { query, variables, operationName } = body;
 
   if (!query) {
-    ctx.status = 400;
-    ctx.body = { errors: [{ message: 'Query is required' }] };
-    return;
+    return c.json({ errors: [{ message: 'Query is required' }] }, 400);
   }
 
   try {
+    const rootValue = createResolvers(c.env);
+
     const result = await graphql({
       schema,
       source: query,
@@ -34,34 +49,35 @@ router.post('/graphql', async (ctx) => {
       operationName,
     });
 
-    ctx.body = result;
+    return c.json(result);
   } catch (error) {
-    ctx.status = 500;
-    ctx.body = {
+    return c.json({
       errors: [{
         message: error.message,
-        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        stack: c.env.NODE_ENV === 'development' ? error.stack : undefined
       }]
-    };
+    }, 500);
   }
 });
 
-// GraphQL GET endpoint (for simple queries)
-router.get('/graphql', async (ctx) => {
-  const { query, variables, operationName } = ctx.query;
+// GraphQL GET endpoint
+app.get('/graphql', async (c) => {
+  const query = c.req.query('query');
+  const variables = c.req.query('variables');
+  const operationName = c.req.query('operationName');
 
   if (!query) {
-    ctx.status = 400;
-    ctx.body = {
+    return c.json({
       message: 'GraphQL endpoint. Send POST requests with query, variables, and operationName.',
       example: {
         query: '{ deepseekStatus { status timestamp } }',
       }
-    };
-    return;
+    }, 400);
   }
 
   try {
+    const rootValue = createResolvers(c.env);
+
     const result = await graphql({
       schema,
       source: query,
@@ -70,45 +86,15 @@ router.get('/graphql', async (ctx) => {
       operationName,
     });
 
-    ctx.body = result;
+    return c.json(result);
   } catch (error) {
-    ctx.status = 500;
-    ctx.body = {
+    return c.json({
       errors: [{
         message: error.message,
-        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        stack: c.env.NODE_ENV === 'development' ? error.stack : undefined
       }]
-    };
+    }, 500);
   }
-});
-
-// Health check endpoint
-router.get('/health', (ctx) => {
-  ctx.body = {
-    status: 'ok',
-    timestamp: new Date().toISOString(),
-  };
-});
-
-// Welcome page
-router.get('/', (ctx) => {
-  ctx.body = {
-    message: 'Welcome to Koa + GraphQL + DeepSeek API',
-    endpoints: {
-      graphql: '/graphql',
-      health: '/health',
-    },
-    documentation: 'Send POST requests to /graphql with GraphQL queries',
-  };
-});
-
-app.use(router.routes());
-app.use(router.allowedMethods());
-
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
-  console.log(`📊 GraphQL endpoint: http://localhost:${PORT}/graphql`);
-  console.log(`❤️  Health check: http://localhost:${PORT}/health`);
 });
 
 export default app;

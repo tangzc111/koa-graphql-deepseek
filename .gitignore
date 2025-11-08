@@ -3,6 +3,11 @@ node_modules/
 
 # Environment variables
 .env
+.dev.vars
+
+# Wrangler
+.wrangler/
+wrangler.toml.bak
 
 # Logs
 logs

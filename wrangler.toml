@@ -1,0 +1,13 @@
+name = "koa-graphql-deepseek"
+main = "src/index.js"
+compatibility_date = "2024-01-01"
+
+# Environment variables
+# Set these using: wrangler secret put DEEPSEEK_API_KEY
+[vars]
+DEEPSEEK_API_URL = "https://api.deepseek.com/v1/chat/completions"
+PORT = "4000"
+NODE_ENV = "production"
+
+# Secrets (set via CLI):
+# wrangler secret put DEEPSEEK_API_KEY
